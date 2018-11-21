@@ -83,6 +83,7 @@ void ADXL345_ReadRegister(uint8_t reg, uint8_t *data);
   * @retval None
   */
 int main(void)
+
 {
   /* USER CODE BEGIN 1 */
 
@@ -115,7 +116,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   uint8_t printData[20];
   uint8_t pData[8];
-  uint8_t offset[3];
   uint16_t varde;
 
   while (1)
@@ -125,7 +125,7 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 	  HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x32 , I2C_MEMADD_SIZE_8BIT, pData, 2, 100);
-	  varde = (pData[0]+255) + (pData[1]);
+	  varde = (pData[0]) + (pData[1] >> 8);
 	  HAL_Delay(500);
 	  HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x1E , I2C_MEMADD_SIZE_8BIT, pData, 1, 100);
 	  HAL_Delay(500);
@@ -133,6 +133,7 @@ int main(void)
 	  HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
 
 	  HAL_GPIO_TogglePin(GPIOC, LED0_Pin);
+	  HAL_GPIO_TogglePin(GPIOC, LED1_Pin);
 	  HAL_Delay(500);
 
   }
