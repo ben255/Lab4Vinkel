@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=C:/Users/kabe1725/Documents/Lab4Vinkel/Inc
+HeaderPath=C:/Users/uname/git/Lab4Vinkel/Inc
 HeaderFiles=stm32f4xx_it.h;stm32f4xx_hal_conf.h;main.h;
-SourcePath=C:/Users/kabe1725/Documents/Lab4Vinkel/Src
+SourcePath=C:/Users/uname/git/Lab4Vinkel/Src
 SourceFiles=stm32f4xx_it.c;stm32f4xx_hal_msp.c;main.c;
 
 [PreviousLibFiles]

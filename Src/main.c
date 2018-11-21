@@ -39,7 +39,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
-#include "string.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -53,10 +52,11 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
-#define xOffset = 0x1E;
-#define yOffset = 0x1F;
+#define device_adress	0x53<<1
+uint8_t data_rec[6];
+uint8_t printData[40];
 
-#define device_adress	(0x53<<1)
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,22 +68,32 @@ static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
+void adxl_write(uint8_t reg, uint8_t value){
+	uint8_t data[2];
+	data[0] = reg;
+	data[1] = value;
+	HAL_I2C_Master_Transmit(&hi2c1, device_adress, data, 2, 10);
+}
+
+void adxl_read(uint8_t reg, uint8_t numofbytes){
+	HAL_I2C_Mem_Read(&hi2c1, device_adress, reg, 1,*data_rec, numofbytes, 100);
+	sprintf(printData, "Read: %d\n\r", *data_rec);
+	HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
+}
+
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-void ADXL345_Init();
-void ADXL345_WriteRegister(uint8_t reg, uint8_t *data);
-void ADXL345_ReadRegister(uint8_t reg, uint8_t *data);
 
 
 /* USER CODE END 0 */
+
 /**
   * @brief  The application entry point.
   *
   * @retval None
   */
 int main(void)
-
 {
   /* USER CODE BEGIN 1 */
 
@@ -112,11 +122,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t printData[20];
-  uint8_t pData[8];
-  uint16_t varde;
+  uint8_t pData[2];
 
   while (1)
   {
@@ -124,13 +133,16 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-	  HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x32 , I2C_MEMADD_SIZE_8BIT, pData, 2, 100);
-	  varde = (pData[0]) + (pData[1] >> 8);
-	  HAL_Delay(500);
-	  HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x1E , I2C_MEMADD_SIZE_8BIT, pData, 1, 100);
-	  HAL_Delay(500);
-	  sprintf(printData, "Read: %d\n\r", (varde - pData[0]));
-	  HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
+
+	  HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x00 , 1, pData, 2, 100);
+	  //varde = (pData[0]) + (pData[1] >> 8);
+	  //HAL_Delay(500);
+	 // HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x1E , 1, pData, 1, 100);
+	  //HAL_Delay(500);
+	  //sprintf(printData, "Read: %d\n\r", (varde - pData[0]));
+	  //HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
+
+	  //adxl_read(0x00, 1);
 
 	  HAL_GPIO_TogglePin(GPIOC, LED0_Pin);
 	  HAL_GPIO_TogglePin(GPIOC, LED1_Pin);
@@ -139,20 +151,6 @@ int main(void)
   }
   /* USER CODE END 3 */
 
-}
-
-void ADXL345_Init(){
-
-}
-void ADXL345_WriteRegister(uint8_t reg, uint8_t *data){
-	if(HAL_I2C_IsDeviceReady(&hi2c1,device_adress,5,100)){
-
-	}
-}
-void ADXL345_ReadRegister(uint8_t reg, uint8_t *data){
-	if(HAL_I2C_IsDeviceReady(&hi2c1,device_adress,5,100)){
-
-	}
 }
 
 /**
@@ -218,7 +216,7 @@ static void MX_I2C1_Init(void)
 {
 
   hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 5;
+  hi2c1.Init.ClockSpeed = 100000;
   hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
