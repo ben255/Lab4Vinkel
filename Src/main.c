@@ -127,6 +127,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   uint8_t pData[2];
 
+  //init
+  adxl_write(0x2D, 0b00001000);
+
   while (1)
   {
 
@@ -134,7 +137,7 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 
-	  HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x00 , 1, pData, 2, 100);
+	  //HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x00 , 1, pData, 2, 100);
 	  //varde = (pData[0]) + (pData[1] >> 8);
 	  //HAL_Delay(500);
 	 // HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x1E , 1, pData, 1, 100);
@@ -142,7 +145,10 @@ int main(void)
 	  //sprintf(printData, "Read: %d\n\r", (varde - pData[0]));
 	  //HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
 
-	  //adxl_read(0x00, 1);
+
+
+
+	  adxl_read(0x00, 1);
 
 	  HAL_GPIO_TogglePin(GPIOC, LED0_Pin);
 	  HAL_GPIO_TogglePin(GPIOC, LED1_Pin);
