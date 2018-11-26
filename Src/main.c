@@ -39,7 +39,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
-
+#include <math.h>
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -53,6 +53,14 @@ UART_HandleTypeDef huart2;
 /* Private variables ---------------------------------------------------------*/
 
 #define device_adress	0x53<<1
+#define init 0x2D
+#define xOff 0x1E
+#define yOff 0x1F
+#define xData 0x32
+#define yData 0x34
+#define range 0x31
+
+
 uint8_t data_rec[6];
 uint8_t printData[40];
 
@@ -76,10 +84,35 @@ void adxl_write(uint8_t reg, uint8_t value){
 }
 
 void adxl_read(uint8_t reg, uint8_t numofbytes){
-	HAL_I2C_Mem_Read(&hi2c1, device_adress, reg, 1,*data_rec, numofbytes, 100);
-	sprintf(printData, "Read: %d\n\r", *data_rec);
-	HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
+	HAL_I2C_Mem_Read(&hi2c1, device_adress, reg, 1,data_rec, numofbytes, 100);
 }
+
+void adxl_init(){
+	uint16_t varde;
+
+	adxl_write(init, 8);
+
+	adxl_read(xData, 2);
+	varde = ((*data_rec)) / ((*data_rec)+1);
+	adxl_write(xOff , varde);
+
+	adxl_read(yData, 2);
+	varde = ((*data_rec)) / ((*data_rec)+1);
+	adxl_write(yOff , varde);
+
+}
+
+void adxl_reset_offset(){
+	uint16_t varde;
+	adxl_read(xData, 2);
+	varde = ((*data_rec)) / ((*data_rec)+1);
+	adxl_write(xOff , varde);
+
+	adxl_read(yData, 2);
+	varde = ((*data_rec)) / ((*data_rec)+1);
+	adxl_write(yOff , varde);
+}
+
 
 /* USER CODE END PFP */
 
@@ -125,10 +158,17 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t pData[2];
 
   //init
-  adxl_write(0x2D, 0b00001000);
+
+  adxl_init();
+
+  uint16_t varde;
+  uint8_t offset;
+  uint16_t xPoint, yPoint;
+  uint8_t xRem = 0;
+  uint8_t yRem = 0;
+  HAL_GPIO_TogglePin(GPIOC, LED4_Pin);
 
   while (1)
   {
@@ -137,22 +177,34 @@ int main(void)
 
   /* USER CODE BEGIN 3 */
 
-	  //HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x00 , 1, pData, 2, 100);
-	  //varde = (pData[0]) + (pData[1] >> 8);
-	  //HAL_Delay(500);
-	 // HAL_I2C_Mem_Read(&hi2c1, device_adress , 0x1E , 1, pData, 1, 100);
-	  //HAL_Delay(500);
-	  //sprintf(printData, "Read: %d\n\r", (varde - pData[0]));
-	  //HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
 
 
+	  adxl_read(xData, 2);
+	  varde = ((*data_rec)) + ((*data_rec)+1 >> 8);
 
+	  adxl_read(xOff, 1);
+	  offset = (*data_rec);
 
-	  adxl_read(0x00, 1);
+	  xPoint = varde - offset;
 
-	  HAL_GPIO_TogglePin(GPIOC, LED0_Pin);
-	  HAL_GPIO_TogglePin(GPIOC, LED1_Pin);
-	  HAL_Delay(500);
+	  adxl_read(yData, 2);
+	  varde = ((*data_rec)) + ((*data_rec)+1 >> 8);
+
+	  adxl_read(yOff, 1);
+	  offset = (*data_rec);
+
+	  yPoint = varde - offset;
+
+	  double xAngle = atan( (0,75 * sin(xPoint)) / (0.75 * cos(yPoint)));
+	  double yAngle = atan( (0,75 * cos(yPoint)) / (0.75 * sin(xPoint)));
+
+	  sprintf(printData, "X: %d, Y: %d\n\r", xAngle, yAngle);
+	  HAL_UART_Transmit(&huart2,printData, strlen(printData), 100);
+
+	  xRem = xPoint;
+	  yRem = yPoint;
+
+	  HAL_Delay(200);
 
   }
   /* USER CODE END 3 */
